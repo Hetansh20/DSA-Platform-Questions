@@ -16,25 +16,18 @@ string rtrim(const string &);
 
 #include <algorithm> // Required for std::min
 
+#include <algorithm> // Required for std::min
+
 int pageCount(int n, int p) {
+    // Calculate turns from the front (page 1).
+    // Each turn reveals 2 pages (e.g., page 2 and 3 after 1 turn).
     int turns_from_front = p / 2;
 
-    int turns_from_back;
-
-    if (n % 2 == 1) { // If total pages 'n' is an odd number
-        // Special handling for odd 'n': if 'p' is the last page 'n' or the page before 'n' (n-1),
-        // it requires 0 turns from the back. Otherwise, it's (n - p) / 2.
-        if (p == n || p == n - 1) {
-            turns_from_back = 0;
-        } else {
-            turns_from_back = (n - p) / 2;
-        }
-    } else { // If total pages 'n' is an even number
-        // For even 'n', the turns from the back is simply (n - p) / 2.
-        turns_from_back = (n - p) / 2;
-    }
-
-    // Return the minimum of turns from front or back
+    // Calculate turns from the back (page n).
+    int turns_from_back = (n / 2) - (p / 2);
+    
+    // Return the minimum of turns from front or back.
+    // The student will choose the path that requires fewer turns.
     return min(turns_from_front, turns_from_back);
 }
 
