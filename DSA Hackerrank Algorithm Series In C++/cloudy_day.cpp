@@ -21,75 +21,76 @@ long maximumPeople(vector<long> p, vector<long> x, vector<long> y, vector<long> 
     int n = p.size();   // towns
     int m = y.size();   // clouds
 
-    vector<pair<long, long>> towns;
-    for (int i = 0; i < n; i++)
-        towns.push_back({x[i], p[i]}); 
+    vector<pair<long long,long long>> towns;
+    towns.reserve(n);
+    for (int i = 0; i < n; ++i) towns.push_back({x[i], p[i]});
     sort(towns.begin(), towns.end());
 
-    vector<long> loc(n), pop(n);
-    for (int i = 0; i < n; i++) {
+    vector<long long> loc(n), pop(n);
+    for (int i = 0; i < n; ++i) {
         loc[i] = towns[i].first;
         pop[i] = towns[i].second;
     }
 
-    vector<long> pref(n + 1);
-    for (int i = 0; i < n; i++)
-        pref[i + 1] = pref[i] + pop[i];
+    vector<long long> pref(n + 1, 0);
+    for (int i = 0; i < n; ++i) pref[i + 1] = pref[i] + pop[i];
 
-    auto sumRange = [&](int l, int r) {
-        if (l > r) return 0L;
-        return pref[r + 1] - pref[l];
+    auto sumRange = [&](int L, int R) -> long long {
+        if (L > R) return 0LL;
+        return pref[R + 1] - pref[L];
     };
 
-    vector<pair<int, int>> cloudRange(m);
-
-    for (int i = 0; i < m; i++) {
-        long left = y[i] - r[i];
-        long right = y[i] + r[i];
-
-        int L = lower_bound(loc.begin(), loc.end(), left) - loc.begin();
-        int R = upper_bound(loc.begin(), loc.end(), right) - loc.begin() - 1;
-
+    vector<pair<int,int>> cloudRange(m);
+    for (int i = 0; i < m; ++i) {
+        long long left = y[i] - r[i];
+        long long right = y[i] + r[i];
+        int L = int(lower_bound(loc.begin(), loc.end(), left) - loc.begin());
+        int R = int(upper_bound(loc.begin(), loc.end(), right) - loc.begin()) - 1;
         cloudRange[i] = {L, R};
     }
 
-    vector<int> coverCount(n, 0);
-    for (int i = 0; i < m; i++) {
+    vector<int> diff(n + 1, 0);
+    for (int i = 0; i < m; ++i) {
         int L = cloudRange[i].first;
         int R = cloudRange[i].second;
         if (L <= R) {
-            coverCount[L]++;
-            if (R + 1 < n) coverCount[R + 1]--;
+            diff[L] += 1;
+            diff[R + 1] -= 1;
+        }
+    }
+    vector<int> coverCount(n, 0);
+    int cur = 0;
+    for (int i = 0; i < n; ++i) {
+        cur += diff[i];
+        coverCount[i] = cur;
+    }
+
+    long long alwaysSunny = 0;
+    for (int i = 0; i < n; ++i) if (coverCount[i] == 0) alwaysSunny += pop[i];
+
+    vector<long long> uniquePop(n, 0);
+    for (int i = 0; i < n; ++i) if (coverCount[i] == 1) uniquePop[i] = pop[i];
+
+    vector<long long> prefUnique(n + 1, 0);
+    for (int i = 0; i < n; ++i) prefUnique[i + 1] = prefUnique[i] + uniquePop[i];
+
+    auto uniqueSumRange = [&](int L, int R) -> long long {
+        if (L > R) return 0LL;
+        return prefUnique[R + 1] - prefUnique[L];
+    };
+
+    long long bestGain = 0;
+    for (int i = 0; i < m; ++i) {
+        int L = cloudRange[i].first;
+        int R = cloudRange[i].second;
+        if (L <= R) {
+            long long gain = uniqueSumRange(L, R);
+            if (gain > bestGain) bestGain = gain;
         }
     }
 
-    for (int i = 1; i < n; i++)
-        coverCount[i] += coverCount[i - 1];
-
-    long alwaysSunny = 0;
-    for (int i = 0; i < n; i++)
-        if (coverCount[i] == 0)
-            alwaysSunny += pop[i];
-    vector<long> uniqueContribution(m, 0);
-
-    for (int i = 0; i < m; i++) {
-        long sum = 0;
-        int L = cloudRange[i].first;
-        int R = cloudRange[i].second;
-        if (L > R) continue;
-
-        for (int t = L; t <= R; t++)
-            if (coverCount[t] == 1)
-                sum += pop[t];
-
-        uniqueContribution[i] = sum;
-    }
-
-    long bestGain = 0;
-    for (int i = 0; i < m; i++)
-        bestGain = max(bestGain, uniqueContribution[i]);
-
-    return alwaysSunny + bestGain;
+    long long ans = alwaysSunny + bestGain;
+    return (long)ans;
 }
 
 
